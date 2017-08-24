@@ -1,12 +1,39 @@
 <?php
 // DIC configuration
 
+use App\Action\RoleAction;
+use App\Action\ConstituencyAction;
+use App\Action\CountyAction;
+use App\Action\UserAction;
+
+
 $container = $app->getContainer();
 
 // -----------------------------------------------------------------------------
 // Service providers
 // -----------------------------------------------------------------------------
 
+//Override the default Not Allowed Handler
+$container['notAllowedHandler'] = function ($c) {
+    return function ($request, $response) use ($c) {
+        return $c['response']
+            ->withStatus(404)
+            ->withJSON(
+                array('error' => 'Method missing, please refer to the documentation' )
+            );
+    };
+};
+
+//Override the default Not Found Handler
+$container['notFoundHandler'] = function ($c) {
+    return function ($request, $response) use ($c) {
+        return $c['response']
+            ->withStatus(404)
+            ->withJSON(
+                array('error' => 'Invalid route, please refer to the documentation' )
+            );
+    };
+};
 // Twig
 $container['view'] = function ($c) {
     $settings = $c->get('settings');
@@ -24,10 +51,21 @@ $container['flash'] = function ($c) {
     return new \Slim\Flash\Messages;
 };
 
+/**
+ * JWT Token
+ */
+ $container['jwtoken'] = function($c)
+{
+    return new \Firebase\JWT\JWT();
+};
 // -----------------------------------------------------------------------------
 // Service factories
 // -----------------------------------------------------------------------------
 
+/**
+ * @param $c
+ * @return \Monolog\Logger
+ */
 // monolog
 $container['logger'] = function ($c) {
     $settings = $c->get('settings');
@@ -36,7 +74,10 @@ $container['logger'] = function ($c) {
     $logger->pushHandler(new \Monolog\Handler\StreamHandler($settings['logger']['path'], \Monolog\Logger::DEBUG));
     return $logger;
 };
-
+/**
+ * @param $c
+ * @return \Doctrine\ORM\EntityManager
+ */
 // Doctrine
 $container['em'] = function ($c) {
     $settings = $c->get('settings');
@@ -54,11 +95,28 @@ $container['em'] = function ($c) {
 // Action factories
 // -----------------------------------------------------------------------------
 
-$container['App\Action\HomeAction'] = function ($c) {
-    return new App\Action\HomeAction($c->get('view'), $c->get('logger'));
+$container[UserAction::class] = function($c)
+{
+    $userResource = new App\Resource\UserResource($c->get('em'));
+    $countyResource = new App\Resource\CountyResource($c->get('em'));
+    $constituencyResource = new App\Resource\ConstituencyResource($c->get('em'));
+    $roleResource = new App\Resource\RoleResource($c->get('em'));
+    return new App\Action\UserAction($userResource,$countyResource,$constituencyResource,$roleResource,$c->get('logger'));
+};
+$container[CountyAction::class] = function ($c)
+{
+    $countyResource = new App\Resource\CountyResource($c->get('em'));
+    return new App\Action\CountyAction($countyResource,$c->get('logger'));
+
 };
 
-$container['App\Action\PhotoAction'] = function ($c) {
-    $photoResource = new \App\Resource\PhotoResource($c->get('em'));
-    return new App\Action\PhotoAction($photoResource);
+$container[ConstituencyAction::class] = function ($c)
+{
+    $constituencyResource = new App\Resource\ConstituencyResource($c->get('em'));
+    return new App\Action\ConstituencyAction($constituencyResource,$c->get('logger'));
+};
+$container[RoleAction::class] = function($c)
+{
+    $roleResource = new App\Resource\RoleResource($c->get('em'));
+    return new App\Action\RoleAction($roleResource,$c->get('logger'));
 };

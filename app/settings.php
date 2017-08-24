@@ -10,7 +10,8 @@ return [
                 'auto_reload' => true,
             ],
         ],
-
+        //error handler
+        'displayErrorDetails' => true,
         // monolog settings
         'logger' => [
             'name' => 'app',
@@ -28,9 +29,9 @@ return [
             'connection' => [
                 'driver'   => 'pdo_mysql',
                 'host'     => 'localhost',
-                'dbname'   => 'your-db',
-                'user'     => 'your-user-name',
-                'password' => 'your-password',
+                'dbname'   => 'jigovernapi',
+                'user'     => 'root',
+                'password' => '',
             ]
         ]
     ],
